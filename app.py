@@ -2,6 +2,7 @@ import os
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import json  # для красивого вывода JSON
 
 app = Flask(__name__)
 CORS(app)
@@ -37,19 +38,28 @@ def generate():
         }
     }
 
+    # Логируем отправляемый payload
+    print("Отправляемый JSON payload:")
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+
     try:
         # Отправляем задачу на генерацию
         r = requests.post("https://stablehorde.net/api/v2/generate/async", json=payload, headers=headers)
+        print("Ответ status code:", r.status_code)
+        print("Ответ body:", r.text)  # тело ответа в строковом формате
         r.raise_for_status()
         task_id = r.json()["id"]
 
         # Ожидаем результат
         while True:
-            check = requests.get(f"https://stablehorde.net/api/v2/generate/status/{task_id}", headers=headers).json()
-            if check["done"]:
+            check_response = requests.get(f"https://stablehorde.net/api/v2/generate/status/{task_id}", headers=headers)
+            check = check_response.json()
+            print("Статус задачи:", json.dumps(check, indent=2, ensure_ascii=False))
+            if check.get("done"):
                 image_url = check["generations"][0]["img"]
                 return jsonify({"url": image_url})
     except Exception as e:
+        print("Ошибка:", str(e))
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
