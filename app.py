@@ -33,7 +33,6 @@ def generate():
             "sampler_name": "k_euler",
             "steps": 25,
             "cfg_scale": 7.0,
-            "seed": None,
             "trusted_workers": True
         }
     }
