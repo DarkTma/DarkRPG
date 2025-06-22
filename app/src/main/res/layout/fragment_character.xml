@@ -5,6 +5,7 @@
     android:padding="16dp">
 
     <LinearLayout
+        android:id="@+id/character_layout"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -57,5 +58,44 @@
             android:layout_height="wrap_content"
             android:text="Регенерация маны: "
             android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/btnCreate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Создать персонажа"
+            android:visibility="visible"
+            android:background="#FF0000" />
+
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Удалить персонажа"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Опиши персонажа"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/ivCharacter"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+
     </LinearLayout>
 </ScrollView>

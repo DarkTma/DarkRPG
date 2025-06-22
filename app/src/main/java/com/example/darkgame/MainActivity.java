@@ -25,8 +25,18 @@ public class MainActivity extends AppCompatActivity {
         // Загрузка дефолтного фрагмента
         loadFragment(new WorldFragment());
 
-        btnWorld.setOnClickListener(v -> loadFragment(new WorldFragment()));
-        btnCharacter.setOnClickListener(v -> loadFragment(new CharacterFragment()));
+        btnWorld.setOnClickListener(v -> loadFragment(new WorldFragment())); // ✅
+
+// В MainActivity.java
+        btnCharacter.setOnClickListener(v -> {
+            Fragment fragment = new CharacterFragment();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
     }
 
     private void loadFragment(Fragment fragment) {
