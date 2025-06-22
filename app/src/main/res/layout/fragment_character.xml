@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Имя: "
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tvHp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="HP: "
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tvDefense"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Защита: "
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tvSpeed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Скорость: "
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tvMana"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Мана: "
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tvRegen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Регенерация HP: "
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tvManaRegen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Регенерация маны: "
+            android:textSize="20sp" />
+    </LinearLayout>
+</ScrollView>
