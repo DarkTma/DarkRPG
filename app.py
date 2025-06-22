@@ -40,6 +40,7 @@ def generate():
     # Логируем отправляемый payload
     print("Отправляемый JSON payload:")
     print(json.dumps(payload, indent=2, ensure_ascii=False))
+    print("AI_HORDE_API_KEY =", os.getenv("AI_HORDE_API_KEY")
 
     try:
         # Отправляем задачу на генерацию
