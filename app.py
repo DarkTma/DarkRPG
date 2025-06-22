@@ -1,29 +1,54 @@
 import os
-from dotenv import load_dotenv
-import replicate
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-load_dotenv()  # загружаем переменные из .env
 
 app = Flask(__name__)
 CORS(app)
 
-# Получаем токен из переменной окружения
-os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN")
+# Подставьте свой API-ключ от AI Horde
+AI_HORDE_API_KEY = os.getenv("AI_HORDE_API_KEY")
 
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.json
     prompt = data.get("prompt")
+
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
+
+    headers = {
+        "apikey": AI_HORDE_API_KEY,
+        "Client-Agent": "DarkRPGApp:1.0:telegram.com/darktma"
+    }
+
+    payload = {
+        "prompt": prompt,
+        "params": {
+            "n": 1,
+            "width": 512,
+            "height": 512,
+            "karras": True,
+            "sampler_name": "k_euler",
+            "steps": 25,
+            "cfg_scale": 7.0,
+            "seed": None,
+            "trusted_workers": True
+        }
+    }
+
     try:
-        output = replicate.run(
-            "stability-ai/stable-diffusion-3.5-medium",
-            input={"prompt": prompt}
-        )
-        return jsonify({"url": output[0]})
+        # Отправляем задачу на генерацию
+        r = requests.post("https://stablehorde.net/api/v2/generate/async", json=payload, headers=headers)
+        r.raise_for_status()
+        task_id = r.json()["id"]
+
+        # Ожидаем результат
+        while True:
+            check = requests.get(f"https://stablehorde.net/api/v2/generate/status/{task_id}", headers=headers).json()
+            if check["done"]:
+                image_url = check["generations"][0]["img"]
+                return jsonify({"url": image_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
