@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json  # для красивого вывода JSON
