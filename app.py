@@ -3,6 +3,7 @@ import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -81,16 +82,34 @@ def generate_image_with_modelslab(prompt):
         response.raise_for_status()
         result = response.json()
 
-        output = result.get("output")
-        if isinstance(output, list) and len(output) > 0:
+        output = result.get("output", [])
+        if output:
             return output[0]
+
+        # Если output пустой, пробуем fetch_result
+        fetch_url = result.get("fetch_result")
+        if fetch_url:
+            print("Ожидаем генерацию изображения (fetch)...")
+            time.sleep(2)  # подождём 2 секунды перед fetch
+
+            for _ in range(5):  # максимум 5 попыток
+                fetch_resp = requests.get(fetch_url, headers=headers)
+                if fetch_resp.status_code == 200:
+                    fetch_json = fetch_resp.json()
+                    output = fetch_json.get("output", [])
+                    if output:
+                        return output[0]
+                time.sleep(2)
+
+            print("fetch_result вернул пустой output после повторных попыток")
         else:
-            print("Modelslab вернул пустой output:", result)
-            return None
+            print("Отсутствует fetch_result в ответе")
 
     except Exception as e:
         print("Ошибка Modelslab:", e)
-        return None
+
+    return None
+
 
 # ===== Flask route =====
 @app.route("/generate", methods=["POST"])
