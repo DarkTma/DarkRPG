@@ -1,4 +1,5 @@
 import os
+import replicate
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -10,9 +11,9 @@ app = Flask(__name__)
 CORS(app)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-MODELSLAB_API_KEY = os.getenv("MODELSLAB_API_KEY")  # Добавьте в .env
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_TOKEN
 
-# ===== Gemini =====
 def call_gemini_text_api(user_prompt):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     headers = {"Content-Type": "application/json"}
@@ -24,10 +25,11 @@ def call_gemini_text_api(user_prompt):
                 {"text": (
                     "Ты — помощник, который переводит текст с русского на английский и немного улучшает его для генерации аниме-персонажа. "
                     "Сохрани все основные черты и настроение, заданные пользователем. "
-                    "Добавь только лёгкие улучшения — уточни аниме-стиль, добавь светлый белый фон и простую магическую атмосферу "
-                    "(например, лёгкую ауру или сияние), если это не противоречит описанию. "
+                    "Добавь только лёгкие улучшения — уточни мультяшный аниме-стиль, добавь светлый белый фон и простую магическую атмосферу (например, лёгкую ауру, сияние или искры), если это не противоречит описанию. "
                     "Избегай брони, крови и агрессии, если это явно не указано. "
-                    "Добавь стиль рисовки 'anime flatter style'. "
+                    "Добавь аккуратно подходящий стиль рисовки, предпочтительно мультяшный — например 'anime flatter style', 'pastel anime', 'light novel style', или 'simplified anime style'. "
+                    "Избегай излишней детализации, реализма и сложных текстур. "
+                    "Персонаж должен быть изображён в полный рост (full body), по центру изображения. "
                     "Ответь только улучшенным текстом на английском, без форматирования или пояснений."
                 )},
                 {"text": user_prompt}
@@ -46,49 +48,40 @@ def call_gemini_text_api(user_prompt):
         response = requests.post(url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
         result = response.json()
-        parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-        if parts and "text" in parts[0]:
-            return parts[0]["text"].strip()
+
+        if result and "candidates" in result and len(result["candidates"]) > 0:
+            parts = result["candidates"][0]["content"]["parts"]
+            if parts and "text" in parts[0]:
+                return parts[0]["text"].strip()
+
         print("Неверная структура ответа от Gemini:", result)
-    except Exception as e:
-        print("Ошибка Gemini:", e)
-    return None
-
-# ===== Modelslab API =====
-def generate_image_with_modelslab(prompt):
-    url = "https://modelslab.com/api/v6/images/text2img"
-    headers = {
-        "key": MODELSLAB_API_KEY,
-        "Content-Type": "application/json"
-    }
-
-    data = {
-        "prompt": prompt,
-        "model_id": "flat-2d-animerge",
-        "lora_model": None,
-        "width": "512",
-        "height": "768",
-        "negative_prompt": "(low quality, blurry, deformed, ugly, grainy, nsfw, text, signature, watermark)",
-        "num_inference_steps": "30",
-        "scheduler": "DPMSolverMultistepScheduler",
-        "guidance_scale": "7.5",
-        "enhance_prompt": None
-    }
-
-    try:
-        response = requests.post(url, headers=headers, json=data, timeout=60)
-        response.raise_for_status()
-        result = response.json()
-        return result.get("output", [None])[0]
-    except Exception as e:
-        print("Ошибка Modelslab:", e)
         return None
 
-# ===== Flask route =====
+    except Exception as e:
+        print(f"Ошибка Gemini: {e}")
+        return None
+
+def generate_image_with_replicate(prompt):
+    try:
+        output = replicate.run(
+            "stability-ai/stable-diffusion-3.5-medium",
+            input={"prompt": prompt}
+        )
+        if output:
+            # Репликейт иногда возвращает список с URL-строкой или FileOutput объектом — приводим к строке
+            first_item = output[0]
+            return str(first_item)  # Явно превращаем в строку
+        return None
+    except Exception as e:
+        print(f"Ошибка Replicate: {e}")
+        return None
+
+
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.json
     prompt = data.get("prompt")
+
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
 
@@ -97,10 +90,12 @@ def generate():
     if not improved_prompt:
         return jsonify({"error": "Не удалось улучшить промт через Gemini"}), 500
 
-    print("Шаг 2: Генерация изображения через Modelslab...")
-    image_url = generate_image_with_modelslab(improved_prompt)
+    print(f"Улучшенный промт: {improved_prompt}")
+
+    print("Шаг 2: Генерация изображения через Replicate...")
+    image_url = generate_image_with_replicate(improved_prompt)
     if not image_url:
-        return jsonify({"error": "Не удалось сгенерировать изображение"}), 500
+        return jsonify({"error": "Не удалось сгенерировать изображение через Replicate"}), 500
 
     return jsonify({"url": image_url})
 
