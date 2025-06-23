@@ -65,7 +65,7 @@ def generate_image_with_modelslab(prompt):
 
     data = {
         "prompt": prompt,
-        "model_id": "flat-2d-animerge",
+        "model_id": "boziorealvisxlv4",
         "lora_model": None,
         "width": "512",
         "height": "768",
