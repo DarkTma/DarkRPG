@@ -3,7 +3,6 @@ import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-import time
 
 load_dotenv()
 
@@ -29,7 +28,6 @@ def call_gemini_text_api(user_prompt):
                     "(например, лёгкую ауру или сияние), если это не противоречит описанию. "
                     "Избегай брони, крови и агрессии, если это явно не указано. "
                     "Добавь стиль рисовки 'anime flatter style'. "
-                    "Размести персонажа по центру изображения. "
                     "Ответь только улучшенным текстом на английском, без форматирования или пояснений."
                 )},
                 {"text": user_prompt}
@@ -66,7 +64,7 @@ def generate_image_with_modelslab(prompt):
 
     data = {
         "prompt": prompt,
-        "model_id": "boziorealvisxlv4",
+        "model_id": "flat-2d-animerge",
         "lora_model": None,
         "width": "512",
         "height": "768",
@@ -81,35 +79,10 @@ def generate_image_with_modelslab(prompt):
         response = requests.post(url, headers=headers, json=data, timeout=60)
         response.raise_for_status()
         result = response.json()
-
-        output = result.get("output", [])
-        if output:
-            return output[0]
-
-        # Если output пустой, пробуем fetch_result
-        fetch_url = result.get("fetch_result")
-        if fetch_url:
-            print("Ожидаем генерацию изображения (fetch)...")
-            time.sleep(2)  # подождём 2 секунды перед fetch
-
-            for _ in range(5):  # максимум 5 попыток
-                fetch_resp = requests.get(fetch_url, headers=headers)
-                if fetch_resp.status_code == 200:
-                    fetch_json = fetch_resp.json()
-                    output = fetch_json.get("output", [])
-                    if output:
-                        return output[0]
-                time.sleep(2)
-
-            print("fetch_result вернул пустой output после повторных попыток")
-        else:
-            print("Отсутствует fetch_result в ответе")
-
+        return result.get("output", [None])[0]
     except Exception as e:
         print("Ошибка Modelslab:", e)
-
-    return None
-
+        return None
 
 # ===== Flask route =====
 @app.route("/generate", methods=["POST"])
