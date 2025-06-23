@@ -27,14 +27,14 @@ def call_gemini_text_api(user_prompt):
                     "Сохрани все основные черты и настроение, заданные пользователем. "
                     "Добавь только лёгкие улучшения — уточни аниме-стиль, добавь светлый белый фон и простую магическую атмосферу (например, лёгкую ауру или сияние), если это не противоречит описанию. "
                     "Избегай брони, крови и агрессии, если это явно не указано. "
-                    "Если пользователь не указал стиль, добавь аккуратно подходящий стиль рисовки, например 'anime flatter style', 'pastel anime', или 'light novel style'. "
-                    "Если стиль указан, не меняй его, а только усиливай. "
+                    "Укажи стиль рисовки, например 'anime flatter style'. "
                     "Ответь только улучшенным текстом на английском, без форматирования или пояснений."
                 )},
                 {"text": user_prompt}
             ]
         }
     ]
+
     data = {
         "contents": messages,
         "generationConfig": {
@@ -57,24 +57,27 @@ def call_gemini_text_api(user_prompt):
         return None
 
     except Exception as e:
-        print(f"Ошибка Gemini: {e}")
+        print(f"\u041e\u0448\u0438\u0431\u043a\u0430 Gemini: {e}")
         return None
 
 def generate_image_with_replicate(prompt):
     try:
         output = replicate.run(
-            "stability-ai/stable-diffusion-3.5-medium",
-            input={"prompt": prompt}
+            "flat-2d-animerge",  # Здесь можно заменить модель
+            input={
+                "prompt": prompt,
+                "width": 512,
+                "height": 512,
+                "num_inference_steps": 30,
+                "guidance_scale": 7.5
+            }
         )
         if output:
-            # Репликейт иногда возвращает список с URL-строкой или FileOutput объектом — приводим к строке
-            first_item = output[0]
-            return str(first_item)  # Явно превращаем в строку
+            return str(output[0])
         return None
     except Exception as e:
-        print(f"Ошибка Replicate: {e}")
+        print(f"\u041e\u0448\u0438\u0431\u043a\u0430 Replicate: {e}")
         return None
-
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -84,17 +87,17 @@ def generate():
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
 
-    print("Шаг 1: Обработка промта через Gemini...")
+    print("\u0428\u0430\u0433 1: \u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u043f\u0440\u043e\u043c\u0442\u0430 \u0447\u0435\u0440\u0435\u0437 Gemini...")
     improved_prompt = call_gemini_text_api(prompt)
     if not improved_prompt:
-        return jsonify({"error": "Не удалось улучшить промт через Gemini"}), 500
+        return jsonify({"error": "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0443\u043b\u0443\u0447\u0448\u0438\u0442\u044c \u043f\u0440\u043e\u043c\u0442 \u0447\u0435\u0440\u0435\u0437 Gemini"}), 500
 
-    print(f"Улучшенный промт: {improved_prompt}")
+    print(f"\u0423\u043b\u0443\u0447\u0448\u0435\u043d\u043d\u044b\u0439 \u043f\u0440\u043e\u043c\u0442: {improved_prompt}")
 
-    print("Шаг 2: Генерация изображения через Replicate...")
+    print("\u0428\u0430\u0433 2: \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f \u0447\u0435\u0440\u0435\u0437 Replicate...")
     image_url = generate_image_with_replicate(improved_prompt)
     if not image_url:
-        return jsonify({"error": "Не удалось сгенерировать изображение через Replicate"}), 500
+        return jsonify({"error": "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435 \u0447\u0435\u0440\u0435\u0437 Replicate"}), 500
 
     return jsonify({"url": image_url})
 
