@@ -62,6 +62,10 @@ def generate():
             if check.get("done"):
                 image_url = check["generations"][0]["img"]
                 return jsonify({"url": image_url})
+            if check.get("message") == "10 per 1 minute":
+                time.sleep(10)
+                continue
+            time.sleep(6)
     except Exception as e:
         print("Ошибка:", str(e))
         return jsonify({"error": str(e)}), 500
