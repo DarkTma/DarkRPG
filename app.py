@@ -3,6 +3,10 @@ import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json  # для красивого вывода JSON
+from dotenv import load_dotenv  # ← добавляем
+
+load_dotenv()
+
 
 app = Flask(__name__)
 CORS(app)
