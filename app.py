@@ -80,7 +80,14 @@ def generate_image_with_modelslab(prompt):
         response = requests.post(url, headers=headers, json=data, timeout=60)
         response.raise_for_status()
         result = response.json()
-        return result.get("output", [None])[0]
+
+        output = result.get("output")
+        if isinstance(output, list) and len(output) > 0:
+            return output[0]
+        else:
+            print("Modelslab вернул пустой output:", result)
+            return None
+
     except Exception as e:
         print("Ошибка Modelslab:", e)
         return None
